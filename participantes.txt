@@ -1,1 +1,2 @@
-#Inserir aqui a lista dos participantes
+#Nome do participante, quantidade de horas
+#Exemplo: João Maria de Pedro, 20

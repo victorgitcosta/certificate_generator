@@ -9,11 +9,23 @@ MARGIN = 20
 CSV_FILE = "participantes.txt"
 OUTPUT_PDF = "certificados_lote.pdf"
 
+lista_participantes = []
 # Open the CSV file and read the names
 try:
     with open(CSV_FILE, "r", encoding="utf-8") as file:
-        # Read lines, strip whitespace, and remove the trailing commas
-        names_list = [line.strip().rstrip(",") for line in file if line.strip()]
+        for line in file:
+            line = line.strip()
+            if not line:
+                continue
+
+            if "," in line:
+                nome, horas = line.rsplit(",", 1)
+                lista_participantes.append({
+                    "nome": nome.strip(),
+                    "horas": horas.strip()
+                })
+            else:
+                print(f"Aviso: linha pulada por falta de vírgula: '{line}'")
 except FileNotFoundError:
     print(f"Erro: O arquivo '{CSV_FILE}' não foi encontrado.")
     exit()
@@ -24,7 +36,9 @@ doc = fitz.open()
 # =========================
 # LOOP THROUGH NAMES
 # =========================
-for name in names_list:
+for participante in lista_participantes:
+    nome = participante["nome"]
+    horas = participante["horas"]
     # Create a new page for each person
     page = doc.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
 
@@ -67,14 +81,14 @@ INSTITUTO FEDERAL DE EDUCAÇÃO, CIÊNCIA E TECNOLOGIA DO CEARÁ
 CAMPUS DE MARACANAÚ
 COORDENAÇÃO DE EXTENSÃO
 AV. PARQUE CENTRAL S/N (DISTRITO INDUSTRIAL I), MARACANAÚ""",
-        fontsize=12,
-        fontname="helv",  
+        fontsize=9,
+        fontname="hebo",  
         align=1
     )
 
     # TITLE
     page.insert_textbox(
-        fitz.Rect(50, 200, 545, 240),  
+        fitz.Rect(50, 206, 545, 240),  
         "CERTIFICADO",
         fontsize=20,
         fontname="helv",
@@ -88,9 +102,9 @@ AV. PARQUE CENTRAL S/N (DISTRITO INDUSTRIAL I), MARACANAÚ""",
     # The <b> tags will automatically use Helvetica-Bold.
     html_body = f"""
     <div style="font-family: Helvetica; font-size: 14pt; text-align: center; line-height: 1.6;">
-        Certificamos que <b>{name}</b> participou do(a) 
+        Certificamos que <b>{nome}</b> participou do(a) 
         <b>Semana 0 da Ciência da Computação</b> do Instituto Federal de Educação, 
-        Ciência e Tecnologia do Ceará, com carga horária de <b>20 horas</b> 
+        Ciência e Tecnologia do Ceará Campus Maracanaú, com carga horária de <b>{horas} horas</b> 
         no(s) dia(s) <b>03, 04 e 05 de Março de 2026</b>.
     </div>
     """
@@ -108,16 +122,30 @@ AV. PARQUE CENTRAL S/N (DISTRITO INDUSTRIAL I), MARACANAÚ""",
     page.insert_textbox(
         date_rect,
         date_text,
-        fontsize=10,
+        fontsize=9,
         fontname="helv",
         align=2  
     )
 
+    # =========================
     # SIGNATURES
+    # =========================
     sig_line_y = 520  
 
-    # LEFT signature line
+    # --- LEFT signature line ---
+    
+    # 1. Insert the signature image right above the line
+    # fitz.Rect(x0, y0, x1, y1) -> x coordinates center it, y coordinates put it above 520
+    page.insert_image(
+        fitz.Rect(117, 450, 280, 565), 
+        filename="assinatura-removebg-preview.png",
+        keep_proportion=True
+    )
+
+    # 2. Draw the line
     page.draw_line((120, sig_line_y), (280, sig_line_y), width=1)
+    
+    # 3. Insert the title text
     page.insert_textbox(
         fitz.Rect(80, sig_line_y + 10, 320, sig_line_y + 40),
         "Presidente do Centro Acadêmico do Curso",
@@ -126,7 +154,7 @@ AV. PARQUE CENTRAL S/N (DISTRITO INDUSTRIAL I), MARACANAÚ""",
         align=1
     )
 
-    # RIGHT signature line
+    # --- RIGHT signature line ---
     page.draw_line((320, sig_line_y), (480, sig_line_y), width=1)
     page.insert_textbox(
         fitz.Rect(320, sig_line_y + 10, 480, sig_line_y + 40),
@@ -172,4 +200,4 @@ AV. PARQUE CENTRAL S/N (DISTRITO INDUSTRIAL I), MARACANAÚ""",
 # SAVE
 # =========================
 doc.save(OUTPUT_PDF)
-print(f"Sucesso! Gerados {len(names_list)} certificados no arquivo '{OUTPUT_PDF}'.")
+print(f"Sucesso! Gerados {len(lista_participantes)} certificados no arquivo '{OUTPUT_PDF}'.")
