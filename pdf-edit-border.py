@@ -59,7 +59,7 @@ for participante in lista_participantes:
     # 🖼️ BACKGROUND (ABSTRACT BORDER IMAGE)
     page.insert_image(
         fitz.Rect(0, 0, PAGE_WIDTH, PAGE_HEIGHT),
-        filename="border.png",
+        filename="imgs/border.png",
         keep_proportion=False  
     )
 
@@ -83,7 +83,7 @@ for participante in lista_participantes:
     # 🖼️ HEADER LOGO
     page.insert_image(
         fitz.Rect(240, 30, 355, 110),
-        filename="header_img.png",
+        filename="imgs/header_img.png",
         keep_proportion=True
     )
 
@@ -146,7 +146,7 @@ AV. PARQUE CENTRAL S/N (DISTRITO INDUSTRIAL I), MARACANAÚ""",
     # --- LEFT signature line ---
     page.insert_image(
         fitz.Rect(117, 450, 280, 565), 
-        filename="ass_ca.png",
+        filename="imgs/ass_ca.png",
         keep_proportion=True
     )
 
@@ -163,7 +163,7 @@ AV. PARQUE CENTRAL S/N (DISTRITO INDUSTRIAL I), MARACANAÚ""",
     # --- RIGHT signature line ---
     page.insert_image(
         fitz.Rect(317, 450, 480, 565), 
-        filename="ass_coord.png",
+        filename="imgs/ass_coord.png",
         keep_proportion=True
     )
 
@@ -192,7 +192,7 @@ AV. PARQUE CENTRAL S/N (DISTRITO INDUSTRIAL I), MARACANAÚ""",
     )
     page.insert_image(
         footer_img_1_rect,
-        filename="footer_img_1.png",
+        filename="imgs/footer_img_1.png",
         keep_proportion=True
     )
 
@@ -204,7 +204,7 @@ AV. PARQUE CENTRAL S/N (DISTRITO INDUSTRIAL I), MARACANAÚ""",
     )
     page.insert_image(
         footer_img_0_rect,
-        filename="footer_img_0.png",
+        filename="imgs/footer_img_0.png",
         keep_proportion=True
     )
 
