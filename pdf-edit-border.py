@@ -1,4 +1,6 @@
 import fitz
+import re
+import os
 
 # =========================
 # SETTINGS
@@ -6,32 +8,40 @@ import fitz
 PAGE_WIDTH = 595
 PAGE_HEIGHT = 842
 MARGIN = 20
-CSV_FILE = "participantes.txt"
-OUTPUT_PDF = "certificados_lote.pdf"
+CSV_FILE = "certificates/attendes.txt"
+OUTPUT_DIR = "certificates"
+
+# Ensure the output directory exists, creating it if necessary
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 lista_participantes = []
 # Open the CSV file and read the names
 try:
     with open(CSV_FILE, "r", encoding="utf-8") as file:
+        # Skip the first line (header: name,hrs,email)
+        next(file, None)
+        
         for line in file:
             line = line.strip()
             if not line:
                 continue
 
-            if "," in line:
-                nome, horas = line.rsplit(",", 1)
+            # Split by comma and check if we have at least name and hours
+            parts = line.split(",")
+            if len(parts) >= 2:
+                nome = parts[0].strip()
+                horas = parts[1].strip()
+                # We ignore parts[2] (the email) entirely
+                
                 lista_participantes.append({
-                    "nome": nome.strip(),
-                    "horas": horas.strip()
+                    "nome": nome,
+                    "horas": horas
                 })
             else:
-                print(f"Aviso: linha pulada por falta de vírgula: '{line}'")
+                print(f"Aviso: linha pulada por formato incorreto: '{line}'")
 except FileNotFoundError:
     print(f"Erro: O arquivo '{CSV_FILE}' não foi encontrado.")
     exit()
-
-# Create a new blank PDF document
-doc = fitz.open()
 
 # =========================
 # LOOP THROUGH NAMES
@@ -39,7 +49,11 @@ doc = fitz.open()
 for participante in lista_participantes:
     nome = participante["nome"]
     horas = participante["horas"]
-    # Create a new page for each person
+    
+    # Create a new blank PDF document for EACH person
+    doc = fitz.open()
+    
+    # Create a new page
     page = doc.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
 
     # 🖼️ BACKGROUND (ABSTRACT BORDER IMAGE)
@@ -98,8 +112,6 @@ AV. PARQUE CENTRAL S/N (DISTRITO INDUSTRIAL I), MARACANAÚ""",
     # =========================
     # BODY (USING HTML FOR BOLD TEXT)
     # =========================
-    # We use an f-string to inject the {name} variable.
-    # The <b> tags will automatically use Helvetica-Bold.
     html_body = f"""
     <div style="font-family: Helvetica; font-size: 14pt; text-align: center; line-height: 1.6;">
         Certificamos que <b>{nome}</b> participou do(a) 
@@ -109,7 +121,6 @@ AV. PARQUE CENTRAL S/N (DISTRITO INDUSTRIAL I), MARACANAÚ""",
     </div>
     """
 
-    # Replace insert_textbox with insert_htmlbox
     page.insert_htmlbox(
         fitz.Rect(80, 280, 515, 400),  
         html_body
@@ -133,19 +144,14 @@ AV. PARQUE CENTRAL S/N (DISTRITO INDUSTRIAL I), MARACANAÚ""",
     sig_line_y = 520  
 
     # --- LEFT signature line ---
-    
-    # 1. Insert the signature image right above the line
-    # fitz.Rect(x0, y0, x1, y1) -> x coordinates center it, y coordinates put it above 520
     page.insert_image(
         fitz.Rect(117, 450, 280, 565), 
-        filename="assinatura-removebg-preview.png",
+        filename="ass_ca.png",
         keep_proportion=True
     )
 
-    # 2. Draw the line
     page.draw_line((120, sig_line_y), (280, sig_line_y), width=1)
     
-    # 3. Insert the title text
     page.insert_textbox(
         fitz.Rect(80, sig_line_y + 10, 320, sig_line_y + 40),
         "Presidente do Centro Acadêmico do Curso",
@@ -155,6 +161,12 @@ AV. PARQUE CENTRAL S/N (DISTRITO INDUSTRIAL I), MARACANAÚ""",
     )
 
     # --- RIGHT signature line ---
+    page.insert_image(
+        fitz.Rect(317, 450, 480, 565), 
+        filename="ass_coord.png",
+        keep_proportion=True
+    )
+
     page.draw_line((320, sig_line_y), (480, sig_line_y), width=1)
     page.insert_textbox(
         fitz.Rect(320, sig_line_y + 10, 480, sig_line_y + 40),
@@ -196,8 +208,17 @@ AV. PARQUE CENTRAL S/N (DISTRITO INDUSTRIAL I), MARACANAÚ""",
         keep_proportion=True
     )
 
-# =========================
-# SAVE
-# =========================
-doc.save(OUTPUT_PDF)
-print(f"Sucesso! Gerados {len(lista_participantes)} certificados no arquivo '{OUTPUT_PDF}'.")
+    # =========================
+    # SAVE INDIVIDUAL FILE
+    # =========================
+    # Clean the name to make it a safe filename (removes invalid characters)
+    safe_filename = re.sub(r'[\\/*?:"<>|]', "", nome)
+    
+    # Save the file inside the OUTPUT_DIR folder
+    output_pdf = os.path.join(OUTPUT_DIR, f"{safe_filename}.pdf")
+    
+    doc.save(output_pdf)
+    doc.close() # Free up memory
+    print(f"Certificado gerado: {output_pdf}")
+
+print(f"\nSucesso! Gerados {len(lista_participantes)} certificados na pasta '{OUTPUT_DIR}'.")

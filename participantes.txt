@@ -1,2 +1,0 @@
-#Nome do participante, quantidade de horas
-#Exemplo: João Maria de Pedro, 20
